@@ -4,8 +4,6 @@ import time
 import os
 import argparse
 import sys
-import numpy
-import pandas
 
 
 def get_command_arguments():
