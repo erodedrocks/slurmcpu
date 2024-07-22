@@ -31,7 +31,7 @@ def bprint(output):
 
 
 def create_benchmark(args, cpus: int, partition: str):
-    templatefile = open("test/templates/{args.job_name_prefix}.sh", "r")
+    templatefile = open(f"test/templates/{args.job_name_prefix}.sh", "r")
 
     # templating filling
     filecontents = templatefile.read()
