@@ -1,0 +1,22 @@
+name: pytorch-gpu
+
+channels:
+  - defaults
+  - pytorch
+  - nvidia
+
+dependencies:
+  - python == 3.11.7
+  - pytorch == 2.3.1
+  - torchvision == 0.18.1
+  - torchaudio == 2.3.1
+  - torchmetrics
+  - pytorch-cuda=12.1
+  - jupyterlab
+  - conda-forge::opencv
+  - lightning
+  - onnx
+  - onnxruntime
+  - pandas
+  - pip:
+      - onnxscript
