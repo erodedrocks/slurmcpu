@@ -76,23 +76,25 @@ def harvestbenchmarklogs():
         splitline = line.split(",")
         cores: int = int(splitline[0])
         times: float = float(splitline[1])
-        if rawdata[cores] is None:
+        if rawdata.get(cores) is None:
             rawdata[cores] = [times]
         else:
-            rawdata[cores] = rawdata[cores].append(times)
+            temp = rawdata[cores]
+            temp.append(times)
+            rawdata[cores] = temp
     averageddata = {}
     for key in rawdata.keys():
         averageddata[key] = sum(rawdata[key]) / len(rawdata[key])
     return rawdata, averageddata
 
 
-def getbestval(rawdata):
-    corelist = sorted(rawdata.keys())
+def getbestval(avgdata):
+    corelist = sorted(avgdata.keys())
     corecount = -1
     minseconds = sys.maxsize
     for i in corelist:
-        if rawdata[i] < minseconds:
-            minseconds = rawdata[i]
+        if avgdata[i] < minseconds:
+            minseconds = avgdata[i]
             corecount = i
     return minseconds, corecount
 
@@ -149,7 +151,7 @@ def main():
 
     for _ in range(0, args.optimization_runs):
         rawdata, averageddata = harvestbenchmarklogs()
-        seconds, corecount = getbestval(rawdata)
+        seconds, corecount = getbestval(averageddata)
         if corecount == sorted(list(rawdata.keys()))[0]:
             idx = sorted(list(rawdata.keys())).index(corecount)
             highboundcpus = sorted(rawdata.keys())[idx + 1]
