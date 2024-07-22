@@ -153,13 +153,33 @@ def main():
         rawdata, averageddata = harvestbenchmarklogs()
         seconds, corecount = getbestval(rawdata)
         if corecount == sorted(list(rawdata.keys()))[0]:
-            bprint(corecount)
-            # corecount is the BEST VALUE
-            return 0
+            idx = sorted(list(rawdata.keys())).index(corecount)
+            highboundcpus = sorted(rawdata.keys())[idx + 1]
+            if highboundcpus - corecount == 1:
+                bprint(corecount)
+                # corecount is the best value
+                return 0
+            highcpu = int((corecount + highboundcpus) / 2)
+            if highcpu in rawdata.keys():
+                # corecount is the best value
+                bprint(corecount)
+                return 0
+            else:
+                run_benchmark(args, highcpu, "shared")
         elif corecount == sorted(list(rawdata.keys()))[-1]:
-            bprint(corecount)
-            # corecount is the BEST VALUE
-            return 0
+            idx = sorted(list(rawdata.keys())).index(corecount)
+            lowboundcpus = sorted(rawdata.keys())[idx - 1]
+            if corecount - lowboundcpus == 1:
+                bprint(corecount)
+                # corecount is the best value
+                return 0
+            lowcpu = int((corecount + lowboundcpus) / 2)
+            if lowcpu in rawdata.keys():
+                # corecount is the best value
+                bprint(corecount)
+                return 0
+            else:
+                run_benchmark(args, lowcpu, "shared")
         else:
             idx = sorted(list(rawdata.keys())).index(corecount)
             lowboundcpus = sorted(list(rawdata.keys()))[idx - 1]
