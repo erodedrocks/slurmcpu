@@ -37,7 +37,7 @@ def create_benchmark(args, cpus: int, partition: str):
     filecontents = templatefile.read()
     filecontents = filecontents.replace("[|{CPUS}|]", str(cpus))
     filecontents = filecontents.replace("[|{PARTITION}|]", partition)
-    filecontents = filecontents.replace("[|{JOBS}|]", args.jobs_per_cpu_run)
+    filecontents = filecontents.replace("[|{JOBS}|]", str(args.jobs_per_cpu_run))
 
     open(f"test/templates/{args.job_name_prefix}-{str(cpus)}.sh", "w").write(filecontents)
 
