@@ -166,6 +166,7 @@ def main():
                 return 0
             else:
                 run_benchmark(args, highcpu, "shared")
+                wait_for_benchmark_completion(args)
         elif corecount == sorted(list(rawdata.keys()))[-1]:
             idx = sorted(list(rawdata.keys())).index(corecount)
             lowboundcpus = sorted(rawdata.keys())[idx - 1]
@@ -180,6 +181,7 @@ def main():
                 return 0
             else:
                 run_benchmark(args, lowcpu, "shared")
+                wait_for_benchmark_completion(args)
         else:
             idx = sorted(list(rawdata.keys())).index(corecount)
             lowboundcpus = sorted(list(rawdata.keys()))[idx - 1]
@@ -202,6 +204,7 @@ def main():
                 # corecount is the best value
                 bprint(corecount)
                 return 0
+            wait_for_benchmark_completion(args)
 
 
 
