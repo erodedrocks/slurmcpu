@@ -26,7 +26,7 @@ declare -xr LOCAL_SCRATCH_DIR="/scratch/${USER}/job_${SLURM_JOB_ID}"
 declare -xr CEPH_USER_DIR="/expanse/ceph/users/${USER}"
 
 declare -xr CONDA_CACHE_DIR="${SLURM_SUBMIT_DIR}"
-declare -xr CONDA_ENV_YAML="${CONDA_CACHE_DIR}/environments/pytorch-gpu.yaml"
+declare -xr CONDA_ENV_YAML="${CONDA_CACHE_DIR}/test/environments/pytorch-gpu.yaml"
 declare -xr CONDA_ENV_NAME="$(grep '^name:' ${CONDA_ENV_YAML} | awk '{print $2}')"
 
 echo "${UNIX_TIME} ${LOCAL_TIME} ${SLURM_JOB_ID} ${SLURM_ARRAY_JOB_ID} ${SLURM_ARRAY_TASK_ID} ${SLURM_JOB_SCRIPT_MD5} ${SLURM_JOB_SCRIPT_SHA256} ${SLURM_JOB_SCRIPT_NUMBER_OF_LINES}"
@@ -77,6 +77,6 @@ printenv
 cd "${SLURM_SUBMIT_DIR}"
 
 echo "Running the training script from ${SLURM_SUBMIT_DIR} ..."
-time -p python3 -u torch-model-training.py --classes 10 --precision fp32 --epochs 1 --batch_size 256 --accelerator cpu --savepytorch True
+time -p python3 -u "test/torch-model-training.py" --classes 10 --precision fp32 --epochs 1 --batch_size 256 --accelerator cpu --savepytorch True
 
 echo "Job completed"
