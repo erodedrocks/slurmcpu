@@ -14,6 +14,6 @@
 cd "${SLURM_SUBMIT_DIR}"
 cd ".."
 
-python3 cpu-benchmark.py -n "torch-model-training" -c "16,32" -j 4
+python3 cpu-benchmark.py -n "torch-model-training" -c "16,32" -j 4 -o 4 -i 0.7
 
 echo "Job completed"

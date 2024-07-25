@@ -15,12 +15,18 @@ def get_command_arguments():
     )
 
     parser.add_argument('-n', '--job-name-prefix', type=str, required=True, help='common name prefix for jobs')
-    parser.add_argument('-c', '--initial-cpu-runs', type=str, default="1,2,4,8,16,32", help='initial cpu runs to determine optimal CPU use | NOTE: optimal CPU for criteria will only be calculated within the lowest and highest integers in this list (default: "1,2,4,8,16,32")')
+    parser.add_argument('-c', '--initial-cpu-runs', type=str, default="1,2,4,8,16,32",
+                        help='initial cpu runs to determine optimal CPU use | NOTE: optimal CPU for criteria will only be calculated within the lowest and highest integers in this list (default: "1,2,4,8,16,32")')
     parser.add_argument('-s', '--slurm-partition', type=str, default="shared", help='slurm partition to run on')
     parser.add_argument('-o', '--optimization-runs', type=int, default="2", help='maximum optimization runs')
-    parser.add_argument('-j', '--jobs-per-cpu-run', type=int, default="10", help='jobs per cpu run, more jobs means more accurate numbers')
-    parser.add_argument('-f', '--filter-criteria', type=str, default="runtime", choices=["runtime", "efficiency"], help='filtering criteria')
-    parser.add_argument('-m', '--margin-of-improvement', type=float, default=0.05, help='how much does the runtime speed / efficiency (in decimal) need to decreased by in order to be seen as an improvement? | bounded between [0, inf)')
+    parser.add_argument('-j', '--jobs-per-cpu-run', type=int, default="10",
+                        help='jobs per cpu run, more jobs means more accurate numbers')
+    parser.add_argument('-f', '--filter-criteria', type=str, default="runtime",
+                        choices=["runtime", "efficiency_bound"], help='filtering criteria')
+    parser.add_argument('-i', '--filter-information', type=float, default=0,
+                        help='filtering criteria arguments | runtime_bound: speed (in seconds) that it should be below | efficiency_bound: percentage that efficiency must be below compared to most efficient sample')
+    parser.add_argument('-m', '--margin-of-improvement', type=float, default=0.05,
+                        help='how much does the runtime speed / efficiency (in percentage) need to decreased by in order to be seen as an improvement? | bounded between [0, inf)')
 
     args = parser.parse_args()
     return args
@@ -98,6 +104,7 @@ def getbestval(avgdata):
             corecount = i
     return minseconds, corecount
 
+
 def getbestrange(rawdata):
     corelist = sorted(rawdata.keys())
     avgrange = []
@@ -108,6 +115,51 @@ def getbestrange(rawdata):
             lowestavg = avg
             avgrange = [i, i + 1]
     return lowestavg, avgrange
+
+
+def calculateefficiency(averageddata, seconds, corecount):
+    loweff = sys.maxsize
+    for key in averageddata.keys():
+        val = averageddata.get(key)
+        if val * key < loweff:
+            loweff = val * key
+    return calculateefficiencywithbaseline(loweff, seconds, corecount)
+
+
+def calculateefficiencywithbaseline(loweff, seconds, corecount):
+    return loweff / (seconds * corecount)
+
+
+def bestefficiency(averageddata, threshold):
+    loweff = sys.maxsize
+    for key in averageddata.keys():
+        val = averageddata.get(key)
+        if val * key < loweff:
+            loweff = val * key
+    newlowesteff = sys.maxsize
+    lastcore = -1
+    for key in sorted(averageddata.keys()):
+        eff = calculateefficiencywithbaseline(loweff, averageddata.get(key), key)
+        if eff <= newlowesteff:
+            newlowesteff = eff
+            if newlowesteff < threshold:
+                # output cores
+                return lastcore
+        lastcore = key
+    return -1
+
+def bestruntime(averageddata, threshold):
+    min(averageddata.keys(), key=lambda n: averageddata[n] - threshold)
+    for key in sorted(averageddata.keys()):
+        if averageddata.get(key) <= threshold:
+            return key, averageddata.get(key)
+    return False, -1
+
+def getKey(data, value):
+    for i in data.keys():
+        if data[i] == value:
+            return i
+    return -1
 
 def main():
     inittime = time.time()
@@ -149,84 +201,101 @@ def main():
     # NEW STRAT IDEA: IDENTIFY LOWEST NUMBER AND CREATE TWO JOBS ADJACENT TO THAT CPU COUNT | CONTINUE UNTIL END CRITERIA REACHED
     # TODO: ADD MARGIN OF IMPROVEMENT METRIC
 
-    for _ in range(0, args.optimization_runs):
-        rawdata, averageddata = harvestbenchmarklogs()
-        seconds, corecount = getbestval(averageddata)
-        if corecount == sorted(list(rawdata.keys()))[0]:
-            idx = sorted(list(rawdata.keys())).index(corecount)
-            highboundcpus = sorted(rawdata.keys())[idx + 1]
-            if highboundcpus - corecount == 1:
+    # if args.filter_criteria == "efficiency_bound" and calculateefficiency(averageddata, seconds, corecount) < args.filter_information:
+    #     # out reaches the efficiency value the quickest
+    #     out = bestefficiency(averageddata, args.filter_information)
+    #     bprint(out)
+    #     return 0
+
+    if args.filter_criteria == "runtime":
+        corecount = -1
+        for _ in range(0, args.optimization_runs):
+            rawdata, averageddata = harvestbenchmarklogs()
+            seconds, corecount = getbestval(averageddata)
+            if corecount == sorted(list(rawdata.keys()))[0]:
+                idx = sorted(list(rawdata.keys())).index(corecount)
+                highboundcpus = sorted(rawdata.keys())[idx + 1]
+                if highboundcpus - corecount == 1:
+                    bprint(corecount)
+                    # corecount is the best value
+                    return 0
+                highcpu = int((corecount + highboundcpus) / 2)
+                if highcpu in rawdata.keys():
+                    # corecount is the best value
+                    bprint(corecount)
+                    return 0
+                else:
+                    run_benchmark(args, highcpu, "shared")
+                    wait_for_benchmark_completion(args)
+            elif corecount == sorted(list(rawdata.keys()))[-1]:
+                idx = sorted(list(rawdata.keys())).index(corecount)
+                lowboundcpus = sorted(rawdata.keys())[idx - 1]
+                if corecount - lowboundcpus == 1:
+                    bprint(corecount)
+                    # corecount is the best value
+                    return 0
+                lowcpu = int((corecount + lowboundcpus) / 2)
+                if lowcpu in rawdata.keys():
+                    # corecount is the best value
+                    bprint(corecount)
+                    return 0
+                else:
+                    run_benchmark(args, lowcpu, "shared")
+                    wait_for_benchmark_completion(args)
+            else:
+                idx = sorted(list(rawdata.keys())).index(corecount)
+                lowboundcpus = sorted(list(rawdata.keys()))[idx - 1]
+                highboundcpus = sorted(rawdata.keys())[idx + 1]
+                if highboundcpus - corecount == 1 or corecount - lowboundcpus == 1:
+                    bprint(corecount)
+                    # corecount is the best value
+                    return 0
+
+                lowcpu = int((corecount + lowboundcpus) / 2)
+                highcpu = int((corecount + highboundcpus) / 2)
+
+                # sanity checks (last part should never occur)
+                flag = False
+                if not (lowcpu in rawdata.keys()):
+                    run_benchmark(args, lowcpu, "shared")
+                    flag = True
+                if not (highcpu in rawdata.keys()):
+                    run_benchmark(args, highcpu, "shared")
+                    flag = True
+                if not flag:
+                    # corecount is the best value
+                    bprint(corecount)
+                    return 0
+                wait_for_benchmark_completion(args)
+        bprint(corecount)
+    elif args.filter_criteria == "efficiency_bound":
+        corecount = -1
+        for _ in range(0, args.optimization_runs):
+            rawdata, averageddata = harvestbenchmarklogs()
+            corecount = bestefficiency(averageddata, args.filter_information)
+            if corecount == sorted(list(rawdata.keys()))[0]:
+                # first val best val!
                 bprint(corecount)
-                # corecount is the best value
                 return 0
-            highcpu = int((corecount + highboundcpus) / 2)
-            if highcpu in rawdata.keys():
-                # corecount is the best value
+            elif corecount == sorted(list(rawdata.keys()))[-1]:
+                # last val best val!
                 bprint(corecount)
                 return 0
             else:
-                run_benchmark(args, highcpu, "shared")
-                wait_for_benchmark_completion(args)
-        elif corecount == sorted(list(rawdata.keys()))[-1]:
-            idx = sorted(list(rawdata.keys())).index(corecount)
-            lowboundcpus = sorted(rawdata.keys())[idx - 1]
-            if corecount - lowboundcpus == 1:
-                bprint(corecount)
-                # corecount is the best value
-                return 0
-            lowcpu = int((corecount + lowboundcpus) / 2)
-            if lowcpu in rawdata.keys():
-                # corecount is the best value
-                bprint(corecount)
-                return 0
-            else:
-                run_benchmark(args, lowcpu, "shared")
-                wait_for_benchmark_completion(args)
-        else:
-            idx = sorted(list(rawdata.keys())).index(corecount)
-            lowboundcpus = sorted(list(rawdata.keys()))[idx - 1]
-            highboundcpus = sorted(rawdata.keys())[idx + 1]
-            if highboundcpus - corecount == 1 or corecount - lowboundcpus == 1:
-                bprint(corecount)
-                # corecount is the best value
-                return 0
-
-            lowcpu = int((corecount + lowboundcpus) / 2)
-            highcpu = int((corecount + highboundcpus) / 2)
-            flag = False
-            if not (lowcpu in rawdata.keys()):
-                run_benchmark(args, lowcpu, "shared")
-                flag = True
-            if not (highcpu in rawdata.keys()):
-                run_benchmark(args, highcpu, "shared")
-                flag = True
-            if not flag:
-                # corecount is the best value
-                bprint(corecount)
-                return 0
-            wait_for_benchmark_completion(args)
-
-
-
-    # shrunkRange = [0, sys.maxsize]
-    #
-    # rawdata, averageddata = harvestbenchmarklogs()
-    # lowestavg, avgrange = getbestrange(rawdata)
-    # shrunkRange = avgrange
-    #
-    # while True:
-    #     run_benchmark(args, int((avgrange[0] + avgrange[1]) / 2), args.slurm_partition)
-    #     rawdata, averageddata = harvestbenchmarklogs()
-    #     lowestavg, avgrange = getbestrange(rawdata)
-    #     if not (shrunkRange[0] <= avgrange[0] and shrunkRange[1] >= avgrange[1]):
-    #         pass
-    #         # WE'VE REACHED OPTIMUM? ADD LOGIC LATER AKA OUTPUT FILE AND RETURN
-    #     if avgrange[1] - avgrange[0] == 0:
-    #         pass
-    #         # avgrange[0] is optimal CPUs
-    #     elif avgrange[1] - avgrange[0] == 1:
-    #         pass
-    #         # min(avgrange[0], avgrange[1]) is optimal CPUs
+                idx = sorted(list(rawdata.keys())).index(corecount)
+                lowboundcpus = sorted(list(rawdata.keys()))[idx - 1]
+                if corecount - lowboundcpus == 1:
+                    # corecount is the best value
+                    bprint(corecount)
+                    return 0
+                lowcpu = int((corecount + lowboundcpus) / 2)
+                if not (lowcpu in rawdata.keys()):
+                    run_benchmark(args, lowcpu, "shared")
+                else:
+                    # corecount is the best value
+                    bprint(corecount)
+                    return
+        bprint(corecount)
 
     return 0
 
