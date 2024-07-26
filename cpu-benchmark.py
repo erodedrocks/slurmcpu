@@ -277,7 +277,7 @@ def main():
                 # first val best val!
                 bprint(corecount)
                 return 0
-            elif corecount == sorted(list(rawdata.keys()))[-1]:
+            elif corecount == -1:
                 # last val best val!
                 bprint(corecount)
                 return 0
