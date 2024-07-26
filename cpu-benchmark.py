@@ -24,9 +24,9 @@ def get_command_arguments():
     parser.add_argument('-f', '--filter-criteria', type=str, default="runtime",
                         choices=["runtime", "efficiency_bound"], help='filtering criteria')
     parser.add_argument('-i', '--filter-information', type=float, default=0,
-                        help='filtering criteria arguments | runtime_bound: speed (in seconds) that it should be below | efficiency_bound: percentage that efficiency must be below compared to most efficient sample')
+                        help='filtering criteria arguments | runtime_bound: speed (in seconds) that it should be below | efficiency_bound: percentage that goal must be above compared to most efficient sample')
     parser.add_argument('-m', '--margin-of-improvement', type=float, default=0.05,
-                        help='how much does the runtime speed / efficiency (in percentage) need to decreased by in order to be seen as an improvement? | bounded between [0, inf)')
+                        help='how much does the runtime speed (in percentage) need to decreased by in order to be seen as an improvement? | bounded between [0, inf)')
 
     args = parser.parse_args()
     return args
@@ -277,6 +277,10 @@ def main():
                 # first val best val!
                 bprint(corecount)
                 return 0
+            elif corecount == sorted(list(rawdata.keys()))[-1]:
+                # last val best val!
+                bprint(corecount)
+                return 0
             else:
                 idx = sorted(list(rawdata.keys())).index(corecount)
                 lowboundcpus = sorted(list(rawdata.keys()))[idx - 1]
@@ -291,7 +295,9 @@ def main():
                     # corecount is the best value
                     bprint(corecount)
                     return
-        bprint(corecount)
+            wait_for_benchmark_completion(args)
+        rawdata, averageddata = harvestbenchmarklogs()
+        bprint(bestefficiency(averageddata, args.filter_information))
 
     return 0
 
