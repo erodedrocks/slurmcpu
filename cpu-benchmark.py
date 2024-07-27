@@ -277,14 +277,14 @@ def main():
                 # first val best val!
                 bprint(corecount)
                 return 0
-            elif corecount == -1:
+            if corecount == -1:
                 # last val best val!
                 bprint(corecount)
                 return 0
             else:
                 idx = sorted(list(rawdata.keys())).index(corecount)
-                lowboundcpus = sorted(list(rawdata.keys()))[idx - 1]
-                if corecount - lowboundcpus == 1:
+                lowboundcpus = sorted(list(rawdata.keys()))[idx + 1]
+                if lowboundcpus - corecount == 1:
                     # corecount is the best value
                     bprint(corecount)
                     return 0
