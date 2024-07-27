@@ -273,13 +273,9 @@ def main():
         for _ in range(0, args.optimization_runs):
             rawdata, averageddata = harvestbenchmarklogs()
             corecount = bestefficiency(averageddata, args.filter_information)
-            if corecount == sorted(list(rawdata.keys()))[0]:
-                # first val best val!
-                bprint(corecount)
-                return 0
             if corecount == -1:
                 # last val best val!
-                bprint(corecount)
+                bprint(sorted(list(rawdata.keys()))[-1])
                 return 0
             else:
                 idx = sorted(list(rawdata.keys())).index(corecount)
