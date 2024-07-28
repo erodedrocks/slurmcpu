@@ -55,7 +55,7 @@ def create_benchmark(args, cpus: int, partition: str):
 def run_benchmark(args, cpus, partition):
     create_benchmark(args, cpus, partition)
     script = os.environ["SLURM_SUBMIT_DIR"] + f"/templates/{args.job_name_prefix}-" + str(cpus) + ".sh"
-    process = subprocess.Popen(["python", "runshell.py", f"-s {script}"])
+    process = subprocess.Popen(["sbatch", script])
     while process.poll() is None:
         pass
     bprint(cpus)

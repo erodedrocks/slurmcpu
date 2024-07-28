@@ -32,6 +32,7 @@ echo "${UNIX_TIME} ${LOCAL_TIME} ${SLURM_JOB_ID} ${SLURM_ARRAY_JOB_ID} ${SLURM_A
 cat "${SLURM_JOB_SCRIPT}"
 
 module purge
+module load slurm
 module list
 
 cd "${LOCAL_SCRATCH_DIR}"
