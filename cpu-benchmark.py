@@ -1,9 +1,13 @@
+import math
 import re
 import subprocess
 import time
 import os
 import argparse
 import sys
+
+import numpy as np
+import scipy
 
 
 def get_command_arguments():
@@ -22,7 +26,7 @@ def get_command_arguments():
     parser.add_argument('-j', '--jobs-per-cpu-run', type=int, default="10",
                         help='jobs per cpu run, more jobs means more accurate numbers')
     parser.add_argument('-f', '--filter-criteria', type=str, default="runtime",
-                        choices=["runtime", "efficiency_bound"], help='filtering criteria')
+                        choices=["runtime", "efficiency_bound", "goal_speedup"], help='filtering criteria')
     parser.add_argument('-i', '--filter-information', type=float, default=0,
                         help='filtering criteria arguments | runtime_bound: speed (in seconds) that it should be below | efficiency_bound: percentage that goal must be above compared to most efficient sample')
     parser.add_argument('-m', '--margin-of-improvement', type=float, default=0.05,
@@ -161,6 +165,26 @@ def getKey(data, value):
             return i
     return -1
 
+def func(x, a):
+    return x / (1 + (a * (x - 1)))
+
+def invfunc(y, a):
+    return (y * (1 - a)) / (1 - (a * y))
+
+def closestspeedup(speedupdict, threshold):
+    sortedvallist = sorted(list(speedupdict.values()))
+    pastkey = "n"
+    for val in sortedvallist:
+        if val >= threshold:
+            return pastkey
+        for key in speedupdict.keys():
+            if speedupdict[key] == val:
+                pastkey = key
+    for key in speedupdict.keys():
+        if speedupdict[key] == sortedvallist[-1]:
+            return key
+    return -1
+
 def main():
     inittime = time.time()
     if os.path.isfile("benchmarks.log"):
@@ -294,7 +318,37 @@ def main():
             wait_for_benchmark_completion(args)
         rawdata, averageddata = harvestbenchmarklogs()
         bprint(bestefficiency(averageddata, args.filter_information))
+    elif args.filter_criteria == "goal_speedup":
+        corecount = -1
+        for _ in range(0, args.optimization_runs):
+            rawdata, averageddata = harvestbenchmarklogs()
+            speedupdict = {}
+            maxsec = max(averageddata.values())
+            for key in averageddata.keys():
+                speedupdict[key] = maxsec / averageddata[key]
+            popt, pcov = scipy.optimize.curve_fit(func, np.array(list(speedupdict.keys())), np.array(list(speedupdict.values())), bounds=[0, np.inf])
+            nvalue = popt[0]
+            newcorecheck = math.ceil(invfunc(3, nvalue))
 
+            # return upper bound if upper bound unable to reach
+            if func(newcorecheck, nvalue) > max(speedupdict.values()):
+                maxval = max(speedupdict.values())
+                for key in speedupdict.keys():
+                    if speedupdict[key] == maxval:
+                        bprint(key)
+                        return 0
+
+            bestvalue = closestspeedup(speedupdict, 3)
+            if newcorecheck in averageddata.keys():
+                newcorecheck = math.floor(invfunc(3, nvalue))
+                if newcorecheck in averageddata.keys():
+                    bprint(bestvalue)
+                    return 0
+
+            run_benchmark(args, newcorecheck, "shared")
+            wait_for_benchmark_completion(args)
+        rawdata, averageddata = harvestbenchmarklogs()
+        bprint(bestefficiency(averageddata, args.filter_information))
     return 0
 
 
