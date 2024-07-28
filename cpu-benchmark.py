@@ -19,16 +19,16 @@ def get_command_arguments():
     )
 
     parser.add_argument('-n', '--job-name-prefix', type=str, required=True, help='common name prefix for jobs')
-    parser.add_argument('-c', '--initial-cpu-runs', type=str, default="1,2,4,8,16,32",
+    parser.add_argument('-c', '--initial-cpu-runs', type=str, default="1,4,16,32",
                         help='initial cpu runs to determine optimal CPU use | NOTE: optimal CPU for criteria will only be calculated within the lowest and highest integers in this list (default: "1,2,4,8,16,32")')
     parser.add_argument('-s', '--slurm-partition', type=str, default="shared", help='slurm partition to run on')
     parser.add_argument('-o', '--optimization-runs', type=int, default="2", help='maximum optimization runs')
     parser.add_argument('-j', '--jobs-per-cpu-run', type=int, default="10",
                         help='jobs per cpu run, more jobs means more accurate numbers')
-    parser.add_argument('-f', '--filter-criteria', type=str, default="runtime",
+    parser.add_argument('-f', '--filter-criteria', type=str, default="goal_speedup",
                         choices=["runtime", "efficiency_bound", "goal_speedup"], help='filtering criteria')
     parser.add_argument('-i', '--filter-information', type=float, default=0,
-                        help='filtering criteria arguments | runtime_bound: speed (in seconds) that it should be below | efficiency_bound: percentage that goal must be above compared to most efficient sample')
+                        help='filtering criteria arguments | runtime_bound: speed (in seconds) that it should be below | efficiency_bound: percentage that goal must be above compared to most efficient sample | goal_speedup: the goal speedup')
     parser.add_argument('-m', '--margin-of-improvement', type=float, default=0.05,
                         help='how much does the runtime speed (in percentage) need to decreased by in order to be seen as an improvement? | bounded between [0, inf)')
 
@@ -341,9 +341,14 @@ def main():
             bestvalue = closestspeedup(speedupdict, 3)
             if newcorecheck in averageddata.keys():
                 newcorecheck = math.floor(invfunc(3, nvalue))
-                if newcorecheck in averageddata.keys():
-                    bprint(bestvalue)
-                    return 0
+                if math.floor(invfunc(3, nvalue)) in averageddata.keys():
+                    while newcorecheck in averageddata.keys() and newcorecheck <= max(averageddata.keys()):
+                        newcorecheck += 1
+                    if newcorecheck > max(averageddata.keys()):
+                        bprint(bestvalue)
+                        return 0
+                else:
+                    newcorecheck = math.floor(invfunc(3, nvalue))
 
             run_benchmark(args, newcorecheck, "shared")
             wait_for_benchmark_completion(args)
