@@ -74,7 +74,8 @@ echo "Finalizing the software environment configuration ..."
 printenv
 
 cd "${SLURM_SUBMIT_DIR}"
+cd ".."
 
-python3 ../cpu-benchmark.py -n "torch-model-training" -c "1,8,16,32" -j 16 -o 4 -i 3.5 -f "goal_speedup"
+python3 cpu-benchmark.py -n "torch-model-training" -c "1,8,16,32" -j 16 -o 4 -i 3.5 -f "goal_speedup"
 
 echo "Job completed"
