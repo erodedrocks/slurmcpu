@@ -55,7 +55,7 @@ def create_benchmark(args, cpus: int, partition: str):
 def run_benchmark(args, cpus, partition):
     create_benchmark(args, cpus, partition)
     script = os.environ["SLURM_SUBMIT_DIR"] + f"/templates/{args.job_name_prefix}-" + str(cpus) + ".sh"
-    process = subprocess.Popen(["/cm/shared/apps/slurm/current/bin/sbatch", script], shell=True)
+    process = subprocess.Popen(["python", "runshell.py", f"-s {script}"])
     while process.poll() is None:
         pass
     bprint(cpus)
@@ -63,7 +63,7 @@ def run_benchmark(args, cpus, partition):
 
 def processnames():
     # %x.o%A.%a.%N
-    return str(subprocess.check_output(["/cm/shared/apps/slurm/current/bin/squeue", "-u", os.environ["USER"], "-o", "%j.o%A"]))
+    return str(subprocess.check_output(["squeue", "-u", os.environ["USER"], "-o", "%j.o%A"]))
 
 
 def countbmsrunning(args):
