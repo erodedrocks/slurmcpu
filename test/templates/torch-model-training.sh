@@ -6,7 +6,7 @@
 #SBATCH --partition=[|{PARTITION}|]
 #SBATCH --cpus-per-task=[|{CPUS}|]
 #SBATCH --mem=64G
-#SBATCH --time=04:00:00
+#SBATCH --time=01:00:00
 #SBATCH --output=%x.o%A.%a.%N
 #SBATCH --nodes=1
 #SBATCH --array=1-[|{JOBS}|]

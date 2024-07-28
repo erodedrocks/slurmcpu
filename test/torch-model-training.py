@@ -184,7 +184,7 @@ def main():
         model = CNN(classes, args)
 
     # # Train the model on the dataset || TODO: make the accel option and devices / nodes an arg
-    trainer = pl.Trainer(max_epochs=epochs, accelerator=args.accelerator)
+    trainer = pl.Trainer(max_epochs=epochs, accelerator=args.accelerator, limit_train_batches=0.1)
     trainer.fit(model, datamodule=cifar_datamodule)
     trainer.test(model, dataloaders=cifar_datamodule, verbose=True)
 
