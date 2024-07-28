@@ -11,7 +11,6 @@ from torchvision.transforms import transforms
 from torch.utils.data import TensorDataset, Dataset
 from torchmetrics import Accuracy
 import lightning as pl
-import numpy as np
 
 
 class SDSCSubset(Dataset):
