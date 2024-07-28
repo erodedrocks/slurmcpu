@@ -1,0 +1,9 @@
+name: benchmark
+
+channels:
+  - defaults
+  - pytorch
+
+dependencies:
+  - numpy
+  - scipy
