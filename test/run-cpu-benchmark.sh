@@ -11,6 +11,8 @@
 #SBATCH --time=04:00:00
 #SBATCH --output=%x.o%A.%a.%N
 
+export MKL_SERVICE_FORCE_INTEL=1
+
 declare -xir UNIX_TIME="$(date +'%s')"
 declare -xr LOCAL_TIME="$(date +'%Y%m%dT%H%M%S%z')"
 
