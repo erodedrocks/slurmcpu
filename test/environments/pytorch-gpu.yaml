@@ -18,5 +18,6 @@ dependencies:
   - onnx
   - onnxruntime
   - pandas
+  - scipy
   - pip:
       - onnxscript
