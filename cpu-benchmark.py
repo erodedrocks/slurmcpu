@@ -29,8 +29,8 @@ def get_command_arguments():
                         choices=["runtime", "efficiency_bound", "goal_speedup"], help='filtering criteria')
     parser.add_argument('-i', '--filter-information', type=float, default=0,
                         help='filtering criteria arguments | runtime_bound: speed (in seconds) that it should be below | efficiency_bound: percentage that goal must be above compared to most efficient sample | goal_speedup: the goal speedup')
-    parser.add_argument('-m', '--margin-of-improvement', type=float, default=0.05,
-                        help='how much does the runtime speed (in percentage) need to decreased by in order to be seen as an improvement? | bounded between [0, inf)')
+    parser.add_argument('-b', '--bound-margin', type=float, required=True,
+                        help='margin for the bound (example: a bound-margin = 0.1, filter-criteria = goal_speedup, filter-information = 3 means goal should be between 2.7x and 3.3x faster | runtime_bound: bound margin for speed | efficiency_bound: bound margin for efficiency | goal_speedup: margin for speedup')
 
     args = parser.parse_args()
     return args
@@ -58,7 +58,7 @@ def run_benchmark(args, cpus, partition):
     process = subprocess.Popen(["sbatch", script])
     while process.poll() is None:
         pass
-    bprint(cpus)
+    bprint(f"CPU Count Run: {str(cpus)}")
 
 
 def processnames():
@@ -72,7 +72,6 @@ def countbmsrunning(args):
 
 def wait_for_benchmark_completion(args):
     # Get names of processes running
-    bprint(countbmsrunning(args))
     while countbmsrunning(args) != 0:
         time.sleep(15)
         bprint(str(countbmsrunning(args)) + " benchmarks still running")
@@ -329,6 +328,9 @@ def main():
             popt, pcov = scipy.optimize.curve_fit(func, np.array(list(speedupdict.keys())), np.array(list(speedupdict.values())), bounds=[0, np.inf])
             nvalue = popt[0]
             newcorecheck = math.ceil(invfunc(3, nvalue))
+
+            bprint(f"N Value: {str(nvalue)} | InvFunc output: {str(newcorecheck)}")
+            bprint(f"SpeedupDict: {str(speedupdict)}")
 
             # return upper bound if upper bound unable to reach
             if func(newcorecheck, nvalue) > max(speedupdict.values()):
