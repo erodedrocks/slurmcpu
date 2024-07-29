@@ -220,131 +220,143 @@ def main():
     #     return 0
 
     if args.filter_criteria == "runtime":
-        corecount = -1
+        bestCoreCount = -1
         for _ in range(0, args.optimization_runs):
-            rawdata, averageddata = harvestbenchmarklogs()
-            seconds, corecount = getbestval(averageddata)
-            if corecount == sorted(list(rawdata.keys()))[0]:
-                idx = sorted(list(rawdata.keys())).index(corecount)
-                highboundcpus = sorted(rawdata.keys())[idx + 1]
-                if highboundcpus - corecount == 1:
-                    bprint(corecount)
+            rawData, averagedData = harvestbenchmarklogs()
+            seconds, bestCoreCount = getbestval(averagedData)
+            if bestCoreCount == sorted(list(rawData.keys()))[0]:
+                idx = sorted(list(rawData.keys())).index(bestCoreCount)
+                highboundcpus = sorted(rawData.keys())[idx + 1]
+                if highboundcpus - bestCoreCount == 1:
+                    bprint(bestCoreCount)
                     # corecount is the best value
                     return 0
-                highcpu = int((corecount + highboundcpus) / 2)
-                if highcpu in rawdata.keys():
+                highcpu = int((bestCoreCount + highboundcpus) / 2)
+                if highcpu in rawData.keys():
                     # corecount is the best value
-                    bprint(corecount)
+                    bprint(bestCoreCount)
                     return 0
                 else:
                     run_benchmark(args, highcpu, "shared")
                     wait_for_benchmark_completion(args)
-            elif corecount == sorted(list(rawdata.keys()))[-1]:
-                idx = sorted(list(rawdata.keys())).index(corecount)
-                lowboundcpus = sorted(rawdata.keys())[idx - 1]
-                if corecount - lowboundcpus == 1:
-                    bprint(corecount)
+            elif bestCoreCount == sorted(list(rawData.keys()))[-1]:
+                idx = sorted(list(rawData.keys())).index(bestCoreCount)
+                lowboundcpus = sorted(rawData.keys())[idx - 1]
+                if bestCoreCount - lowboundcpus == 1:
+                    bprint(bestCoreCount)
                     # corecount is the best value
                     return 0
-                lowcpu = int((corecount + lowboundcpus) / 2)
-                if lowcpu in rawdata.keys():
+                lowcpu = int((bestCoreCount + lowboundcpus) / 2)
+                if lowcpu in rawData.keys():
                     # corecount is the best value
-                    bprint(corecount)
+                    bprint(bestCoreCount)
                     return 0
                 else:
                     run_benchmark(args, lowcpu, "shared")
                     wait_for_benchmark_completion(args)
             else:
-                idx = sorted(list(rawdata.keys())).index(corecount)
-                lowboundcpus = sorted(list(rawdata.keys()))[idx - 1]
-                highboundcpus = sorted(rawdata.keys())[idx + 1]
-                if highboundcpus - corecount == 1 or corecount - lowboundcpus == 1:
-                    bprint(corecount)
+                idx = sorted(list(rawData.keys())).index(bestCoreCount)
+                lowboundcpus = sorted(list(rawData.keys()))[idx - 1]
+                highboundcpus = sorted(rawData.keys())[idx + 1]
+                if highboundcpus - bestCoreCount == 1 or bestCoreCount - lowboundcpus == 1:
+                    bprint(bestCoreCount)
                     # corecount is the best value
                     return 0
 
-                lowcpu = int((corecount + lowboundcpus) / 2)
-                highcpu = int((corecount + highboundcpus) / 2)
+                lowcpu = int((bestCoreCount + lowboundcpus) / 2)
+                highcpu = int((bestCoreCount + highboundcpus) / 2)
 
                 # sanity checks (last part should never occur)
                 flag = False
-                if not (lowcpu in rawdata.keys()):
+                if not (lowcpu in rawData.keys()):
                     run_benchmark(args, lowcpu, "shared")
                     flag = True
-                if not (highcpu in rawdata.keys()):
+                if not (highcpu in rawData.keys()):
                     run_benchmark(args, highcpu, "shared")
                     flag = True
                 if not flag:
                     # corecount is the best value
-                    bprint(corecount)
+                    bprint(bestCoreCount)
                     return 0
                 wait_for_benchmark_completion(args)
-        bprint(corecount)
+        bprint(bestCoreCount)
     elif args.filter_criteria == "efficiency_bound":
-        corecount = -1
         for _ in range(0, args.optimization_runs):
-            rawdata, averageddata = harvestbenchmarklogs()
-            corecount = bestefficiency(averageddata, args.filter_information)
-            if corecount == -1:
+            rawData, averagedData = harvestbenchmarklogs()
+            bestCoreCount = bestefficiency(averagedData, args.filter_information)
+            if bestCoreCount == -1:
                 # last val best val!
-                bprint(sorted(list(rawdata.keys()))[-1])
+                bprint(sorted(list(rawData.keys()))[-1])
                 return 0
             else:
-                idx = sorted(list(rawdata.keys())).index(corecount)
-                lowboundcpus = sorted(list(rawdata.keys()))[idx + 1]
-                if lowboundcpus - corecount == 1:
-                    # corecount is the best value
-                    bprint(corecount)
+                idx = sorted(list(rawData.keys())).index(bestCoreCount)
+                lowboundcpus = sorted(list(rawData.keys()))[idx + 1]
+                if lowboundcpus - bestCoreCount == 1:
+                    # bestCoreCount is the best value
+                    bprint(bestCoreCount)
                     return 0
-                lowcpu = int((corecount + lowboundcpus) / 2)
-                if not (lowcpu in rawdata.keys()):
+                lowcpu = int((bestCoreCount + lowboundcpus) / 2)
+                if not (lowcpu in rawData.keys()):
                     run_benchmark(args, lowcpu, "shared")
                 else:
-                    # corecount is the best value
-                    bprint(corecount)
+                    # bestCoreCount is the best value
+                    bprint(bestCoreCount)
                     return
             wait_for_benchmark_completion(args)
-        rawdata, averageddata = harvestbenchmarklogs()
-        bprint(bestefficiency(averageddata, args.filter_information))
+        rawData, averagedData = harvestbenchmarklogs()
+        bprint(bestefficiency(averagedData, args.filter_information))
     elif args.filter_criteria == "goal_speedup":
-        corecount = -1
+        goalspeedup = args.filter_information
+        speedupleeway = args.bound_margin
+
         for _ in range(0, args.optimization_runs):
-            rawdata, averageddata = harvestbenchmarklogs()
-            speedupdict = {}
-            maxsec = max(averageddata.values())
-            for key in averageddata.keys():
-                speedupdict[key] = maxsec / averageddata[key]
-            popt, pcov = scipy.optimize.curve_fit(func, np.array(list(speedupdict.keys())), np.array(list(speedupdict.values())), bounds=[0, np.inf])
-            nvalue = popt[0]
-            newcorecheck = math.ceil(invfunc(args.filter_information, nvalue))
+            rawData, averagedData = harvestbenchmarklogs()
+            speedupTable = {}
+            maxElapsed = max(averagedData.values())
+            for key in averagedData.keys():
+                speedupTable[key] = maxElapsed / averagedData[key]
+            optimalValues, pcov = scipy.optimize.curve_fit(func, np.array(list(speedupTable.keys())), np.array(list(speedupTable.values())), bounds=[0, np.inf])
+            optimalA = optimalValues[0]
+            predictedCores = math.ceil(invfunc(goalspeedup, optimalA))
 
-            bprint(f"N Value: {str(nvalue)} | InvFunc output: {str(newcorecheck)}")
-            bprint(f"SpeedupDict: {str(speedupdict)}")
+            bprint(f"Optimal A: {str(optimalA)} | InvFunc output: {str(predictedCores)}")
+            bprint(f"speedupTable: {str(speedupTable)}")
 
-            # return upper bound if upper bound unable to reach
-            if func(newcorecheck, nvalue) > max(speedupdict.values()):
-                maxval = max(speedupdict.values())
-                for key in speedupdict.keys():
-                    if speedupdict[key] == maxval:
+            # return upper bound if predicted value is unable to be reached
+            if func(predictedCores, optimalA) > max(speedupTable.values()):
+                maxElapsed = max(speedupTable.values())
+                for key in speedupTable.keys():
+                    if speedupTable[key] == maxElapsed:
                         bprint(key)
                         return 0
 
-            bestvalue = closestspeedup(speedupdict, args.filter_information)
-            if newcorecheck in averageddata.keys():
-                newcorecheck = math.floor(invfunc(args.filter_information, nvalue))
-                if math.floor(invfunc(args.filter_information, nvalue)) in averageddata.keys():
-                    while newcorecheck in averageddata.keys() and newcorecheck <= max(averageddata.keys()):
-                        newcorecheck += 1
-                    if newcorecheck > max(averageddata.keys()):
-                        bprint(bestvalue)
+            bestCoreCount = closestspeedup(speedupTable, goalspeedup)  # closest current value
+            if predictedCores in averagedData.keys():
+                if math.fabs(averagedData[predictedCores] - goalspeedup) <= speedupleeway * goalspeedup:  # if within acceptable margin
+                    bprint(predictedCores)
+                    return 0
+                # check if the floor is also in the keys
+                predictedCores = math.floor(invfunc(goalspeedup, optimalA))
+                if predictedCores in averagedData.keys():
+                    if math.fabs(averagedData[predictedCores] - goalspeedup) <= speedupleeway * goalspeedup:  # if within acceptable margin
+                        bprint(predictedCores)
                         return 0
-                else:
-                    newcorecheck = math.floor(invfunc(args.filter_information, nvalue))
 
-            run_benchmark(args, newcorecheck, "shared")
+                    if averagedData[predictedCores] < goalspeedup:
+                        while predictedCores in averagedData.keys() and predictedCores <= max(averagedData.keys()):
+                            predictedCores += 1
+                    else:
+                        while predictedCores in averagedData.keys() and predictedCores <= min(averagedData.keys()):  # min(averageddata.keys()) should always be 1
+                            predictedCores -= 1
+
+                    if predictedCores > max(averagedData.keys()) or predictedCores < min(averagedData.keys()):
+                        bprint(bestCoreCount)
+                        return 0
+
+            run_benchmark(args, predictedCores, "shared")
             wait_for_benchmark_completion(args)
-        rawdata, averageddata = harvestbenchmarklogs()
-        bprint(bestefficiency(averageddata, args.filter_information))
+        rawData, averagedData = harvestbenchmarklogs()
+        bprint(bestefficiency(averagedData, goalspeedup))
     return 0
 
 
