@@ -204,19 +204,8 @@ def main():
     bprint(processnames())
     time.sleep(5)
 
-    while countbmsrunning(args) != len(benchmarkcpuruns):
-        time.sleep(1)
-
     bprint("Initial benchmarks started.")
 
-    # behcmark procesing
-    bprint(processnames())
-    scriptlist = processnames().split("\\n")
-    for i in range(0, len(scriptlist)):
-        scriptlist[i] = scriptlist[i].strip("\'").strip("b")
-    p = re.compile(args.job_name_prefix)
-    scriptlist = [x for x in scriptlist if p.match(x)]
-    bprint(scriptlist)
 
     wait_for_benchmark_completion(args)
 
