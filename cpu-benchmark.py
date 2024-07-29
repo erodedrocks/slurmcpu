@@ -316,7 +316,7 @@ def main():
                 speedupdict[key] = maxsec / averageddata[key]
             popt, pcov = scipy.optimize.curve_fit(func, np.array(list(speedupdict.keys())), np.array(list(speedupdict.values())), bounds=[0, np.inf])
             nvalue = popt[0]
-            newcorecheck = math.ceil(invfunc(3, nvalue))
+            newcorecheck = math.ceil(invfunc(args.filter_information, nvalue))
 
             bprint(f"N Value: {str(nvalue)} | InvFunc output: {str(newcorecheck)}")
             bprint(f"SpeedupDict: {str(speedupdict)}")
@@ -339,7 +339,7 @@ def main():
                         bprint(bestvalue)
                         return 0
                 else:
-                    newcorecheck = math.floor(invfunc(3, nvalue))
+                    newcorecheck = math.floor(invfunc(args.filter_information, nvalue))
 
             run_benchmark(args, newcorecheck, "shared")
             wait_for_benchmark_completion(args)
