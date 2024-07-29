@@ -206,7 +206,6 @@ def main():
 
     bprint("Initial benchmarks started.")
 
-
     wait_for_benchmark_completion(args)
 
     bprint("Initial benchmarks completed.")
@@ -330,10 +329,10 @@ def main():
                         bprint(key)
                         return 0
 
-            bestvalue = closestspeedup(speedupdict, 3)
+            bestvalue = closestspeedup(speedupdict, args.filter_information)
             if newcorecheck in averageddata.keys():
-                newcorecheck = math.floor(invfunc(3, nvalue))
-                if math.floor(invfunc(3, nvalue)) in averageddata.keys():
+                newcorecheck = math.floor(invfunc(args.filter_information, nvalue))
+                if math.floor(invfunc(args.filter_information, nvalue)) in averageddata.keys():
                     while newcorecheck in averageddata.keys() and newcorecheck <= max(averageddata.keys()):
                         newcorecheck += 1
                     if newcorecheck > max(averageddata.keys()):
