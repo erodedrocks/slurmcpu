@@ -79,6 +79,6 @@ printenv
 cd "${SLURM_SUBMIT_DIR}"
 cd ".."
 
-python3 cpu-benchmark.py -n "torch-model-training" -c "1,8,16,32" -j 16 -o 4 -i 4.5 -f "goal_speedup"
+python3 cpu-benchmark.py -n "torch-model-training" -c "1,8,16,32" -j 16 -o 4 -i 4.5 -f "goal_speedup" -b 0.1
 
 echo "Job completed"
