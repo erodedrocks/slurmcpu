@@ -346,7 +346,7 @@ def main():
                         while predictedCores in averagedData.keys() and predictedCores <= max(averagedData.keys()):
                             predictedCores += 1
                     else:
-                        while predictedCores in averagedData.keys() and predictedCores <= min(averagedData.keys()):  # min(averageddata.keys()) should always be 1
+                        while predictedCores in averagedData.keys() and predictedCores >= min(averagedData.keys()):  # min(averageddata.keys()) should always be 1
                             predictedCores -= 1
 
                     if predictedCores > max(averagedData.keys()) or predictedCores < min(averagedData.keys()):
