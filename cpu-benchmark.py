@@ -202,6 +202,7 @@ def main():
     bprint("Attempted task creation")
 
     bprint(processnames())
+    time.sleep(5)
 
     while countbmsrunning(args) != len(benchmarkcpuruns):
         time.sleep(1)
